@@ -14,23 +14,36 @@ import java.security.NoSuchAlgorithmException;
  * This class allows to calculate checksum of a file.
  */
 public class JChecksum {
-    public static void main(String[] args) {
+    private static final int BUFFER_SIZE = 256 * 1024;
+
+    /**
+     * Indicates the size of the buffer to use when reading files. You may override this method in case the default
+     * buffer size (256K) doesn't suit you.
+     *
+     * @return the size of the buffer.
+     */
+    public int withBufferSizeOf() {
+        return BUFFER_SIZE;
+    }
+
+    private MessageDigest getMessageDigest(String algorithm) {
         try {
-            System.out.println(new JChecksum().getChecksum(args[0], Integer.valueOf(args[1])));
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            return MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            throw new RuntimeException(e);
         }
     }
 
-    public String getChecksum(String filePath, int size) throws IOException, NoSuchAlgorithmException {
-        final Path path = Paths.get(filePath);
-        final ByteBuffer buffer = ByteBuffer.allocate(size);
-        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+    public final String sha1(String file) throws IOException {
+        return hash(file, getMessageDigest("SHA-1"));
+    }
 
-        try (ByteChannel byteChannel = Files.newByteChannel(path, StandardOpenOption.READ)) {
-            int read = 0;
+    public final String hash(String file, MessageDigest messageDigest) throws IOException {
+        final Path path = Paths.get(file);
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(withBufferSizeOf());
+
+        try (final ByteChannel byteChannel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+            int read;
             while ((read = byteChannel.read(buffer)) > 0) {
                 buffer.limit(read);
                 messageDigest.update(buffer);
