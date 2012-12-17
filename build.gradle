@@ -2,3 +2,11 @@ apply plugin: 'java'
 
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.guava:guava:13.0.1'
+}
